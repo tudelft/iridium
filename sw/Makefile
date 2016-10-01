@@ -43,17 +43,9 @@
 # make program = Download the hex file to the device, using avrdude.  Please
 #                customize the avrdude settings below first!
 #
-# make filename.s = Just compile filename.c into the assembler code only
-#
 # To rebuild project do "make clean" then "make all".
 #
 #
-
-# AIR MODEM
-TYPE=air
-#TYPE=ground
-
-
 
 # MCU name
 MCU = atmega162
@@ -62,7 +54,8 @@ MCU = atmega162
 FORMAT = ihex
 
 # Target file name (without extension).
-TARGET = iridium
+TARGET_AIR = iridium_air
+TARGET_GROUND = iridium_ground
 
 
 # Optimization level, can be [0, 1, 2, 3, s]. 0 turns off optimization.
@@ -70,28 +63,7 @@ TARGET = iridium
 OPT = 2
 
 # List C source files here. (C dependencies are automatically generated.)
-SRC = $(TARGET).c 
-
-# If there is more than one source file, append them above, or modify and
-# uncomment the following:
-# mt: the file test.c can be omitted (remove #inc test.h and test() in main.c)
-SRC += usart.c
-
-
-# List Assembler source files here.
-# Make them always end in a capital .S.  Files ending in a lowercase .s
-# will not be considered source files but generated files (assembler
-# output from the compiler), and will be deleted upon "make clean"!
-# Even though the DOS/Win* filesystem matches both .s and .S the same,
-# it will preserve the spelling of the filenames, and gcc itself does
-# care about how the name is spelled on its command-line.
-ASRC = 
-
-
-# List any extra directories to look for include files here.
-#     Each directory must be seperated by a space.
-EXTRAINCDIRS = 
-
+SRC = iridium.c usart.c
 
 # Optional compiler flags.
 #  -g:        generate debugging information (for GDB, or for COFF conversion)
@@ -100,41 +72,21 @@ EXTRAINCDIRS =
 #  -Wall...:  warning level
 #  -Wa,...:   tell GCC to pass this to the assembler.
 #    -ahlms:  create assembler listing
-CFLAGS = -g -O$(OPT) \
+CFLAGS_COMMON = -g -O$(OPT) \
 -funsigned-char -funsigned-bitfields -fpack-struct -fshort-enums \
--Wall -Wstrict-prototypes \
--Wa,-adhlns=$(<:.c=.lst) \
-$(patsubst %,-I%,$(EXTRAINCDIRS))
+-Wall -Wstrict-prototypes
 
 
 # Set a "language standard" compiler flag.
 #   Unremark just one line below to set the language standard to use.
 #   gnu99 = C99 + GNU extensions. See GCC manual for more information.
-#CFLAGS += -std=c89
-#CFLAGS += -std=gnu89
-#CFLAGS += -std=c99
-CFLAGS += -std=gnu99
-CFLAGS += -DF_CPU=7372800UL -DARCH=stm32
-CFLAGS += -DMODEM_TYPE=$(TYPE)
-
-# Optional assembler flags.
-#  -Wa,...:   tell GCC to pass this to the assembler.
-#  -ahlms:    create listing
-#  -gstabs:   have the assembler create line number information; note that
-#             for use in COFF files, additional information about filenames
-#             and function names needs to be present in the assembler source
-#             files -- see avr-libc docs [FIXME: not yet described there]
-ASFLAGS = -Wa,-adhlns=$(<:.S=.lst),-gstabs 
-
-
-
-# Optional linker flags.
-#  -Wl,...:   tell GCC to pass this to linker.
-#  -Map:      create map file
-#  --cref:    add cross reference to  map file
-LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
-
-
+CFLAGS_COMMON += -std=gnu99
+CFLAGS_COMMON += -DF_CPU=7372800UL -DARCH=stm32
+CFLAGS_COMMON += -mmcu=$(MCU) -I.
+CFLAGS_AIR = $(CFLAGS_COMMON) -DMODEM_TYPE=air
+CFLAGS_AIR += -Wa,-adhlns=$(<:%.c=air/%.lst)
+CFLAGS_GROUND = $(CFLAGS_COMMON) -DMODEM_TYPE=ground
+CFLAGS_GROUND += -Wa,-adhlns=$(<:%.c=ground/%.lst)
 
 # Additional libraries
 
@@ -142,17 +94,22 @@ LDFLAGS = -Wl,-Map=$(TARGET).map,--cref
 #LDFLAGS += -Wl,-u,vfprintf -lprintf_min
 
 # Floating point printf version (requires -lm below)
-LDFLAGS += -Wl,-u,vfprintf -lprintf_flt
+LDFLAGS_COMMON = -Wl,-u,vfprintf -lprintf_flt
 
 # -lm = math library
-LDFLAGS += -lm
+LDFLAGS_COMMON += -lm
 
-
+# Optional linker flags.
+#  -Wl,...:   tell GCC to pass this to linker.
+#  -Map:      create map file
+#  --cref:    add cross reference to  map file
+LDFLAGS_AIR = $(LDFLAGS_COMMON) -Wl,-Map=$(TARGET_AIR).map,--cref
+LDFLAGS_GROUND = $(LDFLAGS_COMMON) -Wl,-Map=$(TARGET_GROUND).map,--cref
 
 
 # Programming support using avrdude. Settings and variables.
 
-# Programming hardware: alf avr910 avrisp bascom bsd 
+# Programming hardware: alf avr910 avrisp bascom bsd
 # dt006 pavr picoweb pony-stk200 sp12 stk200 stk500
 #
 # Type: avrdude -c ?
@@ -183,14 +140,8 @@ SIZE = avr-size
 
 # Programming support using avrdude.
 AVRDUDE = avrdude
-
-
 REMOVE = rm -f
 COPY = cp
-
-HEXSIZE = $(SIZE) --target=$(FORMAT) $(TARGET).hex
-#mt - use hexadezimal output-fromat // org:  ELFSIZE = $(SIZE) -A $(TARGET).elf
-ELFSIZE = $(SIZE) -x -A $(TARGET).elf
 
 
 # Define Messages
@@ -198,7 +149,7 @@ ELFSIZE = $(SIZE) -x -A $(TARGET).elf
 MSG_ERRORS_NONE = Errors: none
 MSG_BEGIN = -------- begin --------
 MSG_END = --------  end  --------
-MSG_SIZE_BEFORE = Size before: 
+MSG_SIZE_BEFORE = Size before:
 MSG_SIZE_AFTER = Size after:
 MSG_COFF = Converting to AVR COFF:
 MSG_EXTENDED_COFF = Converting to AVR Extended COFF:
@@ -215,22 +166,17 @@ MSG_CLEANING = Cleaning project:
 
 
 # Define all object files.
-OBJ = $(SRC:.c=.o) $(ASRC:.S=.o) 
+OBJ_AIR = $(SRC:%.c=air/%.o)
+OBJ_GROUND = $(SRC:%.c=ground/%.o)
 
 # Define all listing files.
-LST = $(ASRC:.S=.lst) $(SRC:.c=.lst)
+LST = $(SRC:.c=.lst)
 
-# Combine all necessary flags and optional flags.
-# Add target processor to flags.
-ALL_CFLAGS = -mmcu=$(MCU) -I. $(CFLAGS)
-ALL_ASFLAGS = -mmcu=$(MCU) -I. -x assembler-with-cpp $(ASFLAGS)
+# Default targets
+all: begin gccversion $(TARGET_AIR).hex $(TARGET_GROUND).hex finished end
 
-
-
-# Default target.
-all: begin gccversion sizebefore $(TARGET).elf $(TARGET).hex $(TARGET).eep \
-	$(TARGET).lss $(TARGET).sym sizeafter finished export end
-
+air: begin gccversion $(TARGET_AIR).hex finished end
+ground: begin gccversion $(TARGET_GROUND).hex finished end
 
 # Eye candy.
 # AVR Studio 3.x does not check make's exit code but relies on
@@ -246,21 +192,9 @@ end:
 	@echo $(MSG_END)
 	@echo
 
-export:
-	$(COPY) $(TARGET).hex $(TARGET)_$(TYPE).hex
-
-
-# Display size of file.
-sizebefore:
-	@if [ -f $(TARGET).elf ]; then echo; echo $(MSG_SIZE_BEFORE); $(ELFSIZE); echo; fi
-
-sizeafter:
-	@if [ -f $(TARGET).elf ]; then echo; echo $(MSG_SIZE_AFTER); $(ELFSIZE); echo; fi
-
-
 
 # Display compiler version information.
-gccversion : 
+gccversion :
 	@$(CC) --version
 
 
@@ -272,28 +206,24 @@ COFFCONVERT=$(OBJCOPY) --debugging \
 	--change-section-address .data-0x800000 \
 	--change-section-address .bss-0x800000 \
 	--change-section-address .noinit-0x800000 \
-	--change-section-address .eeprom-0x810000 
+	--change-section-address .eeprom-0x810000
 
 
-coff: $(TARGET).elf
+%.coff: %.elf
 	@echo
-	@echo $(MSG_COFF) $(TARGET).cof
-	$(COFFCONVERT) -O coff-avr $< $(TARGET).cof
+	@echo $(MSG_COFF) %.cof
+	$(COFFCONVERT) -O coff-avr $< %.cof
 
 
-extcoff: $(TARGET).elf
+%.extcoff: %.elf
 	@echo
-	@echo $(MSG_EXTENDED_COFF) $(TARGET).cof
-	$(COFFCONVERT) -O coff-ext-avr $< $(TARGET).cof
+	@echo $(MSG_EXTENDED_COFF) %.cof
+	$(COFFCONVERT) -O coff-ext-avr $< %.cof
 
 
-
-
-# Program the device.  
-program: $(TARGET).hex
-	$(AVRDUDE)
-
-
+# Program the device.
+%.program: %.hex
+	$(AVRDUDE) %.hex
 
 
 # Create final output files (.hex, .eep) from ELF output file.
@@ -323,31 +253,29 @@ program: $(TARGET).hex
 
 
 # Link: create ELF output file from object files.
-.SECONDARY : $(TARGET).elf
-.PRECIOUS : $(OBJ)
-%.elf: $(OBJ)
+.SECONDARY : $(TARGET_AIR).elf $(TARGET_GROUND).elf
+.PRECIOUS : $(OBJ_AIR) $(OBJ_GROUND)
+$(TARGET_AIR).elf: $(OBJ_AIR)
 	@echo
 	@echo $(MSG_LINKING) $@
-	$(CC) $(ALL_CFLAGS) $(OBJ) --output $@ $(LDFLAGS)
+	$(CC) $(CFLAGS_AIR) $(OBJ_AIR) --output $@ $(LDFLAGS_AIR)
+
+$(TARGET_GROUND).elf: $(OBJ_GROUND)
+	@echo
+	@echo $(MSG_LINKING) $@
+	$(CC) $(CFLAGS_GROUND) $(OBJ_GROUND) --output $@ $(LDFLAGS_GROUND)
 
 
 # Compile: create object files from C source files.
-%.o : %.c
+air/%.o : %.c
 	@echo
 	@echo $(MSG_COMPILING) $<
-	$(CC) -c $(ALL_CFLAGS) $< -o $@
+	$(CC) -c $(CFLAGS_AIR) $< -o $@
 
-
-# Compile: create assembler files from C source files.
-%.s : %.c
-	$(CC) -S $(ALL_CFLAGS) $< -o $@
-
-
-# Assemble: create object files from assembler source files.
-%.o : %.S
+ground/%.o : %.c
 	@echo
-	@echo $(MSG_ASSEMBLING) $<
-	$(CC) -c $(ALL_ASFLAGS) $< -o $@
+	@echo $(MSG_COMPILING) $<
+	$(CC) -c $(CFLAGS_GROUND) $< -o $@
 
 
 # Target: clean project.
@@ -357,24 +285,14 @@ clean_list :
 	@echo
 	@echo $(MSG_CLEANING)
 	$(REMOVE) *.hex
-	$(REMOVE) $(TARGET).eep
-	$(REMOVE) $(TARGET).obj
-	$(REMOVE) $(TARGET).cof
-	$(REMOVE) $(TARGET).elf
-	$(REMOVE) $(TARGET).map
-	$(REMOVE) $(TARGET).obj
-	$(REMOVE) $(TARGET).a90
-	$(REMOVE) $(TARGET).sym
-	$(REMOVE) $(TARGET).lnk
-	$(REMOVE) $(TARGET).lss
-	$(REMOVE) $(OBJ)
-	$(REMOVE) $(LST)
-	$(REMOVE) $(SRC:.c=.s)
-	$(REMOVE) $(SRC:.c=.d)
+	$(REMOVE) *.elf
+	$(REMOVE) *.map
+	$(REMOVE) air/*
+	$(REMOVE) ground/*
 
 
-# Automatically generate C source code dependencies. 
-# (Code originally taken from the GNU make user manual and modified 
+# Automatically generate C source code dependencies.
+# (Code originally taken from the GNU make user manual and modified
 # (See README.txt Credits).)
 #
 # Note that this will work with sh (bash) and sed that is shipped with WinAVR
@@ -388,12 +306,13 @@ clean_list :
 
 
 # Remove the '-' if you want to see the dependency files generated.
-ifneq ($(MAKECMDGOALS),clean) 
--include $(SRC:.c=.d)
+ifneq ($(MAKECMDGOALS),clean)
+-include $(SRC:%.c=air/%.d)
+-include $(SRC:%.c=ground/%.d)
 endif
 
 
 # Listing of phony targets.
-.PHONY : all begin finish end sizebefore sizeafter gccversion coff extcoff \
+.PHONY : all begin finish end gccversion coff extcoff \
 	clean clean_list program export
 
