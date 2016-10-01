@@ -49,6 +49,7 @@
 
 # MCU name
 MCU = atmega162
+MCU_PROG = m162
 
 # Output format. (can be srec, ihex, binary)
 FORMAT = ihex
@@ -139,7 +140,8 @@ SIZE = avr-size
 
 
 # Programming support using avrdude.
-AVRDUDE = avrdude
+AVR_PROG ?= avrispmkII
+AVRDUDE = avrdude -c $(AVR_PROG) -p $(MCU_PROG)
 REMOVE = rm -f
 COPY = cp
 
@@ -209,22 +211,24 @@ COFFCONVERT=$(OBJCOPY) --debugging \
 	--change-section-address .eeprom-0x810000
 
 
-%.coff: %.elf
+%.coff: iridum_%.elf
 	@echo
-	@echo $(MSG_COFF) %.cof
-	$(COFFCONVERT) -O coff-avr $< %.cof
+	@echo $(MSG_COFF) iridum_%.cof
+	$(COFFCONVERT) -O coff-avr $< iridum_%.cof
 
 
-%.extcoff: %.elf
+%.extcoff: iridum_%.elf
 	@echo
-	@echo $(MSG_EXTENDED_COFF) %.cof
-	$(COFFCONVERT) -O coff-ext-avr $< %.cof
+	@echo $(MSG_EXTENDED_COFF) iridum_%.cof
+	$(COFFCONVERT) -O coff-ext-avr $< iridum_%.cof
 
 
 # Program the device.
-%.program: %.hex
-	$(AVRDUDE) %.hex
+ground_program: $(TARGET_GROUND).hex
+	$(AVRDUDE) -U flash:w:$(TARGET_GROUND).hex
 
+air_program: $(TARGET_AIR).hex
+	$(AVRDUDE) -U flash:w:$(TARGET_AIR).hex
 
 # Create final output files (.hex, .eep) from ELF output file.
 %.hex: %.elf
