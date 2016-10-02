@@ -1,0 +1,1 @@
+<Project name="Iridium"><Folder name="mcu"><File path="usart.h"></File><File path="usart.c"></File></Folder><Folder name="Hardware"><File path="pindef.h"></File></Folder><Folder name="iridium"><File path="ir9523.h"></File></Folder><File path="Makefile"></File><File path="iridium.c"></File></Project>

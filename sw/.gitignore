@@ -1,0 +1,10 @@
+*.o
+*.d
+*.elf
+*.bin
+*.lss
+*.lst
+*.map
+*.sym
+*.pnps
+*.eep
