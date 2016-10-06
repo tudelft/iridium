@@ -58,14 +58,14 @@ class IridiumProtocol(protocol.Protocol):
         reactor.callInThread(self.configure)
 
         # Report connection has been made
-        if self.cb_connected != None:
+        if self.cb_connected is not None:
             self.cb_connected(True)
 
     def connectionLost(self, reason):
         # Report that connection is lost and configruation also(maybe)
-        if self.cb_connected != None:
+        if self.cb_connected is not None:
             self.cb_connected(False)
-        if self.cb_configured != None:
+        if self.cb_configured is not None:
             self.cb_configured(False)
 
 
@@ -76,19 +76,19 @@ class IridiumProtocol(protocol.Protocol):
         else:
             cfg_cmd = "ATE0 V1 X3 &D0 &K0"
         if not self.transmit_cmd_ok(cfg_cmd):
-            if self.cb_configured != None:
+            if self.cb_configured is not None:
                 self.cb_configured(False)
             return
         self.echo_enabled = False
 
         # Set the data connection settings
         if not self.transmit_cmd_ok("AT+CBST=7,0,1"):
-            if self.cb_configured != None:
+            if self.cb_configured is not None:
                 self.cb_configured(False)
             return
 
         # Report that the device has been configured
-        if self.cb_configured != None:
+        if self.cb_configured is not None:
             self.cb_configured(True)
 
     def set_console(self, console_write):
@@ -110,12 +110,12 @@ class IridiumProtocol(protocol.Protocol):
     def _hangup(self):
         # Go out of calling mode
         self.last_cmd = "+++"
-        if self.console_write != None:
+        if self.console_write is not None:
             reactor.callFromThread(self.console_write, "+++\r\n")
         self.in_call = False
         self.transmit("+++")
 
-        if self.cb_calling != None:
+        if self.cb_calling is not None:
             self.cb_calling(False)
 
         # Wait for OK
@@ -127,7 +127,7 @@ class IridiumProtocol(protocol.Protocol):
     def call(self, number):
         self.in_call = True
         self.transmit_cmd("ATD" + number)
-        if self.cb_calling != None:
+        if self.cb_calling is not None:
             self.cb_calling(True)
 
     # Wait for a OK receive
@@ -138,7 +138,7 @@ class IridiumProtocol(protocol.Protocol):
             i += 1
 
         # Report error if timeout
-        if i >= (self.timeout/0.1) and self.console_write != None:
+        if i >= (self.timeout/0.1) and self.console_write is not None:
             reactor.callFromThread(self.console_write, "TIMEOUT (did not receive OK)\r\n")
 
         retn = self.recv_ok
@@ -157,7 +157,7 @@ class IridiumProtocol(protocol.Protocol):
     # Transmit a command
     def transmit_cmd(self, cmd):
         self.last_cmd = cmd
-        if self.console_write != None:
+        if self.console_write is not None:
             reactor.callFromThread(self.console_write, ">> " + cmd + "\r\n")
         self.transmit(cmd + self.delimiter)
 
@@ -179,9 +179,9 @@ class IridiumProtocol(protocol.Protocol):
 
     # Handle the 'CREG' message in thread
     def _handle_creg(self,data):
-        if data == '001,001' and self.cb_registered != None:
+        if data == '001,001' and self.cb_registered is not None:
             self.cb_registered(True)
-        elif self.cb_registered != None:
+        elif self.cb_registered is not None:
             self.cb_registered(False)
 
     # Handle the 'CPIN' message
@@ -221,24 +221,24 @@ class IridiumProtocol(protocol.Protocol):
                 if self.recv_data[-len(self.delimiter):] == self.delimiter:
                     self.in_call = False
                     self.recv_data = ''
-                    if self.console_write != None:
+                    if self.console_write is not None:
                         self.console_write("NO CARRIER\r\n")
-                    if self.cb_calling != None:
+                    if self.cb_calling is not None:
                         self.cb_calling(False)
                 return
 
             # Check if we got an +CR:, CONNECT and ignore
             if self.recv_data.strip().startswith("+CR:") or self.recv_data.strip().startswith("CONNECT"):
                 if self.recv_data[-len(self.delimiter):] == self.delimiter:
-                    if self.console_write != None:
+                    if self.console_write is not None:
                         self.console_write(self.recv_data.strip() + "\r\n")
                     self.recv_data = ''
                 return
 
         # Handle the in call data
-        if self.console_write != None and self.show_data:
+        if self.console_write is not None and self.show_data:
             self.console_write("< %s\r\n" % self.recv_data.encode("hex"))
-        if self.cb_call_data != None:
+        if self.cb_call_data is not None:
             self.cb_call_data(self.recv_data)
 
         self.recv_data = ''
@@ -268,7 +268,7 @@ class IridiumProtocol(protocol.Protocol):
             return
 
         # Split the information from the received line
-        if self.console_write != None:
+        if self.console_write is not None:
             self.console_write(recv_line + "\r\n")
         reg = re.match(r'([+]?)([A-Za-z0-9 ]+)[:]?[ ]?([A-Za-z0-9, ]*)', recv_line)
         #plus = reg.group(1)

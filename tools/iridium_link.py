@@ -29,6 +29,7 @@ import serial
 import pygtk
 import gtk
 import os
+from os import path
 pygtk.require('2.0')
 
 
@@ -214,7 +215,7 @@ class IridiumCtrl:
         self.btn_csq.set_sensitive(False)
         self.toolbar.add(self.btn_csq)
 
-        self.window.set_icon_from_file(os.getenv("PAPARAZZI_HOME") + "/sw/tools/iridium/sat.ico")
+        self.window.set_icon_from_file(path.normpath(path.dirname(path.abspath(__file__))) + "/sat.ico")
 
         # Show the window everything
         self.window.show_all()
@@ -237,7 +238,7 @@ class PprzUDPProtocol(DatagramProtocol):
         self.transport.write(data, ('127.255.255.255', self.out_port))
 
     def datagramReceived(self, datagram, addr):
-        if self.cb_recv_data != None:
+        if self.cb_recv_data is not None:
             self.cb_recv_data(datagram)
 
 if __name__ == "__main__":
