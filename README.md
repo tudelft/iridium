@@ -3,7 +3,7 @@ IRIDIUM IR9523 CARRIER BOARD
 
 Open-source carrier board for iridium IR9523 OEM modem.
 
-![Render of Iridium Carrier Board](https://raw.githubusercontent.com/tudelft/iridium/master/iridium_modem.png)
+![Render of Iridium Carrier Board](https://raw.githubusercontent.com/tudelft/iridium/master/docs/iridium_modem.png)
 
 Disclaimer:
 -----------

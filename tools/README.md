@@ -1,7 +1,7 @@
 # Iridium Link
 The Iridium Link tool configures the ground modem and initiates a call to the air modem. The ground modem firmware acts as an forwarder to the IR9523 OEM modem. This way the ground can be configured to call every number and forward all data over UDP.
 
-![Iridium Link Program](https://raw.githubusercontent.com/tudelft/iridium/master/tools/iridium_link.png)
+![Iridium Link Program](https://raw.githubusercontent.com/tudelft/iridium/master/docs/iridium_link.png)
 
 ## How to make a call
 - Connect your ground modem with a serial cable to your computer (make sure it has the correct firmware)
