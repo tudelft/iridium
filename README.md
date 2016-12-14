@@ -1,6 +1,8 @@
 IRIDIUM IR9523 CARRIER BOARD
 ============================
 
+[![Build Status](https://travis-ci.org/tudelft/iridium.png?branch=master)](https://travis-ci.org/tudelft/iridium)
+
 Open-source carrier board for iridium IR9523 OEM modem.
 
 ![Render of Iridium Carrier Board](https://raw.githubusercontent.com/tudelft/iridium/master/docs/iridium_modem.png)
