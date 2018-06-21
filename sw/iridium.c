@@ -165,7 +165,8 @@ int main(void)
 	sys_time_init();
 	
 	// Initialize (before interrupts are enabled)
-#if MODEM_TYPE==air
+#ifdef MODEM_TYPE_AIR
+#warning AIR_MODEM AUTO CONFIG
 	iridium_setup();
 #endif
 	
@@ -193,7 +194,7 @@ int main(void)
 		{
 			c = Uart0_Rx();
 			
-#if MODEM_TYPE==air
+#ifdef MODEM_TYPE_AIR
 			// Only forward data from autopilot to the modem when Data Carrier Detect is active
 			if (dcd > 0)
 #endif
